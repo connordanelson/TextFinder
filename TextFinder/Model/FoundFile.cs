@@ -4,8 +4,25 @@ namespace TextFinder.Model
 {
 	public class FoundFile : ViewModelBase
 	{
-		private string _fileName;
+		private DateTime _createdOnDate;
+		public DateTime CreatedOnDate
+		{
+			get
+			{
+				return _createdOnDate;
+			}
 
+			set
+			{
+				if (_createdOnDate != value)
+				{
+					_createdOnDate = value;
+					OnPropertyChanged("CreatedOnDate");
+				}
+			}
+		}
+
+		private string _fileName;
 		public string FileName
 		{
 			get
@@ -23,7 +40,6 @@ namespace TextFinder.Model
 		}
 
 		private string _filePath;
-
 		public string FilePath
 		{
 			get
@@ -41,7 +57,6 @@ namespace TextFinder.Model
 		}
 
 		private string _fileType;
-
 		public string FileType
 		{
 			get
@@ -58,8 +73,25 @@ namespace TextFinder.Model
 			}
 		}
 
-		private DateTime _lastAccessedDate;
+		private FoundTextLine[] _foundTextLines;
+		public FoundTextLine[] FoundTextLines
+		{
+			get
+			{
+				return _foundTextLines;
+			}
 
+			set
+			{
+				if (_foundTextLines != value)
+				{
+					_foundTextLines = value;
+					OnPropertyChanged("FoundTextLines");
+				}
+			}
+		}
+
+		private DateTime _lastAccessedDate;
 		public DateTime LastAccessedDate
 		{
 			get
@@ -92,44 +124,6 @@ namespace TextFinder.Model
 				{
 					_lastModifiedDate = value;
 					OnPropertyChanged("LastModifiedDate");
-				}
-			}
-		}
-
-		private DateTime _createdOnDate;
-
-		public DateTime CreatedOnDate
-		{
-			get
-			{
-				return _createdOnDate;
-			}
-
-			set
-			{
-				if (_createdOnDate != value)
-				{
-					_createdOnDate = value;
-					OnPropertyChanged("CreatedOnDate");
-				}
-			}
-		}
-
-		private FoundTextLine[] _foundTextLines;
-
-		public FoundTextLine[] FoundTextLines
-		{
-			get
-			{
-				return _foundTextLines;
-			}
-
-			set
-			{
-				if (_foundTextLines != value)
-				{
-					_foundTextLines = value;
-					OnPropertyChanged("FoundTextLines");
 				}
 			}
 		}

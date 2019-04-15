@@ -2,13 +2,13 @@
 {
 	public class FoundTextLine
 	{
-		public int LineNumber
+		public string Line
 		{
 			get;
 			set;
 		}
 
-		public string Line
+		public int LineNumber
 		{
 			get;
 			set;

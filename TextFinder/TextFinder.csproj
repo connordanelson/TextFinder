@@ -63,7 +63,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="CustomExtensions\StringExtension.cs" />
     <Compile Include="FileSearcher.cs" />
     <Compile Include="Model\DateFilterCriteria.cs" />

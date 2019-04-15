@@ -3,6 +3,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using TextFinder.Model;
 using TextFinder.Settings;
@@ -16,6 +17,7 @@ namespace TextFinder.ViewModel
 		public TextFinderViewModel()
 		{
 			FoundFiles = new ObservableCollection<FoundFile>();
+			FoundTextLines = new ObservableCollection<FoundTextLine>();
 			SearchCommand = new DelegateCommand(_Search);
 			CancelCommand = new DelegateCommand(_Cancel);
 			UpdateFoundTextLinesCommand = new DelegateCommand<FoundFile>(_UpdateFoundTextLines);
@@ -24,54 +26,279 @@ namespace TextFinder.ViewModel
 			CopyToClipboardCommand = new DelegateCommand<FoundTextLine>(_CopyToClipboard);
 			OpenContainingFolderCommand = new DelegateCommand<FoundFile>(_OpenContainingFolder);
 
-			_backgroundWorker = new BackgroundWorker();
-			_backgroundWorker.WorkerSupportsCancellation = true;
-			_backgroundWorker.WorkerReportsProgress = true;
-			_backgroundWorker.DoWork += worker_Search;
-			_backgroundWorker.ProgressChanged += worker_ProgressChanged;
-			_backgroundWorker.RunWorkerCompleted += worker_SearchCompleted;
-
+			_SetupBackGroundWorker();
 			_SetDefaultFromSettings();
+
+			FoundTextLinesMessage = "No items to display";
 		}
 
-		private string _searchText;
+		public DelegateCommand CancelCommand
+		{
+			get;
+			private set;
+		}
 
-		public string SearchText
+		private bool _checkNumberOfLinesBetweenSearchTextEntries;
+		public bool CheckNumberOfLinesBetweenSearchTextEntries
 		{
 			get
 			{
-				return _searchText;
+				return _checkNumberOfLinesBetweenSearchTextEntries;
 			}
 			set
 			{
-				if (_searchText != value)
+				if (_checkNumberOfLinesBetweenSearchTextEntries != value)
 				{
-					_searchText = value;
-					OnPropertyChanged("SearchText");
+					_checkNumberOfLinesBetweenSearchTextEntries = value;
+					OnPropertyChanged("CheckNumberOfLinesBetweenSearchTextEntries");
+					OnPropertyChanged("LinesBetweenSearchText");
 				}
 			}
 		}
 
-		private bool _isSearching;
+		public DelegateCommand<FoundTextLine> CopyToClipboardCommand
+		{
+			get;
+			private set;
+		}
 
-		public bool IsSearching
+		private DateTime? _createdAfterDate;
+		public DateTime? CreatedAfterDate
 		{
 			get
 			{
-				return _isSearching;
+				return _createdAfterDate;
+			}
+
+			set
+			{
+				if (_createdAfterDate != value)
+				{
+					_createdAfterDate = value;
+					OnPropertyChanged("CreatedAfterDate");
+				}
+			}
+		}
+
+		private DateTime? _createdBeforeDate;
+		public DateTime? CreatedBeforeDate
+		{
+			get
+			{
+				return _createdBeforeDate;
 			}
 			set
 			{
-				if (_isSearching != value)
+				if (_createdBeforeDate != value)
 				{
-					_isSearching = value;
-					OnPropertyChanged("IsSearching");
+					_createdBeforeDate = value;
+					OnPropertyChanged("CreatedBeforeDate");
 				}
 			}
+		}
+
+		public string Error => throw new NotImplementedException();
+
+		private string _excludeFiles;
+		public string ExcludeFiles
+		{
+			get
+			{
+				return _excludeFiles;
+			}
+			set
+			{
+				if (_excludeFiles != value)
+				{
+					_excludeFiles = value;
+					OnPropertyChanged("ExcludeFiles");
+				}
+			}
+		}
+
+		private ObservableCollection<FoundFile> mFoundFiles;
+		public ObservableCollection<FoundFile> FoundFiles
+		{
+			get
+			{
+				return mFoundFiles;
+			}
+			set
+			{
+				mFoundFiles = value;
+				OnPropertyChanged("FoundFiles");
+			}
+		}
+
+		private ObservableCollection<FoundTextLine> mFoundTextLines;
+		public ObservableCollection<FoundTextLine> FoundTextLines
+		{
+			get
+			{
+				return mFoundTextLines;
+			}
+			set
+			{
+				mFoundTextLines = value;
+				OnPropertyChanged("FoundTextLines");
+			}
+		}
+
+		private string _foundTextLinesMessage;
+		public string FoundTextLinesMessage
+		{
+			get
+			{
+				return _foundTextLinesMessage;
+			}
+			set
+			{
+				if (_foundTextLinesMessage != value)
+				{
+					_foundTextLinesMessage = value;
+					OnPropertyChanged("FoundTextLinesMessage");
+				}
+			}
+		}
+
+		private string _includeFiles;
+		public string IncludeFiles
+		{
+			get
+			{
+				return _includeFiles;
+			}
+			set
+			{
+				if (_includeFiles != value)
+				{
+					_includeFiles = value;
+					OnPropertyChanged("IncludeFiles");
+				}
+			}
+		}
+
+		private DateTime? _lastAccessedAfterDate;
+		public DateTime? LastAccessedAfterDate
+		{
+			get
+			{
+				return _lastAccessedAfterDate;
+			}
+			set
+			{
+				if (_lastAccessedAfterDate != value)
+				{
+					_lastAccessedAfterDate = value;
+					OnPropertyChanged("LastAccessedAfterDate");
+				}
+			}
+		}
+
+		private DateTime? _lastAccessedBeforeDate;
+		public DateTime? LastAccessedBeforeDate
+		{
+			get
+			{
+				return _lastAccessedBeforeDate;
+			}
+			set
+			{
+				if (_lastAccessedBeforeDate != value)
+				{
+					_lastAccessedBeforeDate = value;
+					OnPropertyChanged("LastAccessedBeforeDate");
+				}
+			}
+		}
+
+		private int? _linesBetweenSearchText;
+		public int? LinesBetweenSearchText
+		{
+			get
+			{
+				return _linesBetweenSearchText;
+			}
+			set
+			{
+				if (_linesBetweenSearchText != value)
+				{
+					_linesBetweenSearchText = value;
+					OnPropertyChanged("LinesBetweenSearchText");
+				}
+			}
+		}
+
+		private bool _matchSearchTextCase;
+		public bool MatchSearchTextCase
+		{
+			get
+			{
+				return _matchSearchTextCase;
+			}
+			set
+			{
+				if (_matchSearchTextCase != value)
+				{
+					_matchSearchTextCase = value;
+					OnPropertyChanged("MatchSearchTextCase");
+				}
+			}
+		}
+
+		private DateTime? _modifiedAfterDate;
+		public DateTime? ModifiedAfterDate
+		{
+			get
+			{
+				return _modifiedAfterDate;
+			}
+			set
+			{
+				if (_modifiedAfterDate != value)
+				{
+					_modifiedAfterDate = value;
+					OnPropertyChanged("ModifiedAfterDate");
+				}
+			}
+		}
+
+		private DateTime? _modifiedBeforeDate;
+		public DateTime? ModifiedBeforeDate
+		{
+			get
+			{
+				return _modifiedBeforeDate;
+			}
+			set
+			{
+				if (_modifiedBeforeDate != value)
+				{
+					_modifiedBeforeDate = value;
+					OnPropertyChanged("ModifiedBeforeDate");
+				}
+			}
+		}
+
+		public DelegateCommand<FoundFile> OpenContainingFolderCommand
+		{
+			get;
+			private set;
+		}
+
+		public DelegateCommand<FoundFile> OpenSelectedFileCommand
+		{
+			get;
+			private set;
+		}
+
+		public DelegateCommand SearchCommand
+		{
+			get;
+			private set;
 		}
 
 		private string _searchPath;
-
 		public string SearchPath
 		{
 			get
@@ -90,44 +317,24 @@ namespace TextFinder.ViewModel
 			}
 		}
 
-		private bool _matchSearchTextCase;
-
-		public bool MatchSearchTextCase
+		private int _searchProgress;
+		public int SearchProgress
 		{
 			get
 			{
-				return _matchSearchTextCase;
+				return _searchProgress;
 			}
 			set
 			{
-				if (_matchSearchTextCase != value)
+				if (_searchProgress != value)
 				{
-					_matchSearchTextCase = value;
-					OnPropertyChanged("MatchSearchTextCase");
-				}
-			}
-		}
-
-		private int? _linesBetweenSearchText;
-
-		public int? LinesBetweenSearchText
-		{
-			get
-			{
-				return _linesBetweenSearchText;
-			}
-			set
-			{
-				if (_linesBetweenSearchText != value)
-				{
-					_linesBetweenSearchText = value;
-					OnPropertyChanged("LinesBetweenSearchText");
+					_searchProgress = value;
+					OnPropertyChanged("SearchProgress");
 				}
 			}
 		}
 
 		private bool _searchSubdirectories;
-
 		public bool SearchSubdirectories
 		{
 			get
@@ -144,181 +351,39 @@ namespace TextFinder.ViewModel
 			}
 		}
 
-		private bool _checkNumberOfLinesBetweenSearchTextEntries;
-
-		public bool CheckNumberOfLinesBetweenSearchTextEntries
+		private string _searchText;
+		public string SearchText
 		{
 			get
 			{
-				return _checkNumberOfLinesBetweenSearchTextEntries;
+				return _searchText;
 			}
 			set
 			{
-				if (_checkNumberOfLinesBetweenSearchTextEntries != value)
+				if (_searchText != value)
 				{
-					_checkNumberOfLinesBetweenSearchTextEntries = value;
-					OnPropertyChanged("CheckNumberOfLinesBetweenSearchTextEntries");
-					OnPropertyChanged("LinesBetweenSearchText");
+					_searchText = value;
+					OnPropertyChanged("SearchText");
 				}
 			}
 		}
 
-		private string _excludeFiles;
-
-		public string ExcludeFiles
+		private ObservableCollection<string> _suggestedSearchPaths;
+		public ObservableCollection<string> SuggestedSearchPaths
 		{
 			get
 			{
-				return _excludeFiles;
-			}
-			set
-			{
-				if (_excludeFiles != value)
-				{
-					_excludeFiles = value;
-					OnPropertyChanged("ExcludeFiles");
-				}
-			}
-		}
-
-		private string _includeFiles;
-
-		public string IncludeFiles
-		{
-			get
-			{
-				return _includeFiles;
-			}
-			set
-			{
-				if (_includeFiles != value)
-				{
-					_includeFiles = value;
-					OnPropertyChanged("IncludeFiles");
-				}
-			}
-		}
-
-		private DateTime? _modifiedBeforeDate;
-
-		public DateTime? ModifiedBeforeDate
-		{
-			get
-			{
-				return _modifiedBeforeDate;
-			}
-			set
-			{
-				if (_modifiedBeforeDate != value)
-				{
-					_modifiedBeforeDate = value;
-					OnPropertyChanged("ModifiedBeforeDate");
-				}
-			}
-		}
-
-		private DateTime? _modifiedAfterDate;
-
-		public DateTime? ModifiedAfterDate
-		{
-			get
-			{
-				return _modifiedAfterDate;
-			}
-			set
-			{
-				if (_modifiedAfterDate != value)
-				{
-					_modifiedAfterDate = value;
-					OnPropertyChanged("ModifiedAfterDate");
-				}
-			}
-		}
-
-		private DateTime? _lastAccessedBeforeDate;
-
-		public DateTime? LastAccessedBeforeDate
-		{
-			get
-			{
-				return _lastAccessedBeforeDate;
-			}
-			set
-			{
-				if (_lastAccessedBeforeDate != value)
-				{
-					_lastAccessedBeforeDate = value;
-					OnPropertyChanged("LastAccessedBeforeDate");
-				}
-			}
-		}
-
-		private DateTime? _lastAccessedAfterDate;
-
-		public DateTime? LastAccessedAfterDate
-		{
-			get
-			{
-				return _lastAccessedAfterDate;
+				return _suggestedSearchPaths;
 			}
 
 			set
 			{
-				if (_lastAccessedAfterDate != value)
+				if (_suggestedSearchPaths != value)
 				{
-					_lastAccessedAfterDate = value;
-					OnPropertyChanged("LastAccessedAfterDate");
+					_suggestedSearchPaths = value;
+					OnPropertyChanged("SuggestedSearchPaths");
 				}
 			}
-		}
-
-		private DateTime? _createdBeforeDate;
-
-		public DateTime? CreatedBeforeDate
-		{
-			get
-			{
-				return _createdBeforeDate;
-			}
-			set
-			{
-				if (_createdBeforeDate != value)
-				{
-					_createdBeforeDate = value;
-					OnPropertyChanged("CreatedBeforeDate");
-				}
-			}
-		}
-
-		private DateTime? _createdAfterDate;
-
-		public DateTime? CreatedAfterDate
-		{
-			get
-			{
-				return _createdAfterDate;
-			}
-
-			set
-			{
-				if (_createdAfterDate != value)
-				{
-					_createdAfterDate = value;
-					OnPropertyChanged("CreatedAfterDate");
-				}
-			}
-		}
-
-		public DelegateCommand SearchCommand
-		{
-			get;
-			private set;
-		}
-
-		public DelegateCommand CancelCommand
-		{
-			get;
-			private set;
 		}
 
 		public DelegateCommand<FoundFile> UpdateFoundTextLinesCommand
@@ -327,22 +392,77 @@ namespace TextFinder.ViewModel
 			private set;
 		}
 
-		public DelegateCommand<FoundFile> OpenSelectedFileCommand
+		public string this[string columnName]
 		{
-			get;
-			private set;
+			get
+			{
+				if (columnName == "LinesBetweenSearchText")
+				{
+					if (CheckNumberOfLinesBetweenSearchTextEntries && LinesBetweenSearchText == null)
+					{
+						return "Number of lines between search text is required.";
+					}
+				}
+				return string.Empty;
+			}
 		}
 
-		public DelegateCommand<FoundTextLine> CopyToClipboardCommand
+		private void _Cancel()
 		{
-			get;
-			private set;
+			_backgroundWorker.CancelAsync();
 		}
 
-		public DelegateCommand<FoundFile> OpenContainingFolderCommand
+		private void _CopyToClipboard(FoundTextLine foundTextLine)
 		{
-			get;
-			private set;
+			if (foundTextLine != null)
+			{
+				Clipboard.SetText(foundTextLine.Line);
+			}
+		}
+
+		private void _OpenContainingFolder(FoundFile foundFile)
+		{
+			if (foundFile != null)
+			{
+				Process.Start("explorer.exe", "/select," + foundFile.FilePath);
+			}
+		}
+
+		private void _OpenSelectedFile(FoundFile selectedFile)
+		{
+			if (selectedFile != null)
+			{
+				Process.Start(selectedFile.FilePath);
+			}
+		}
+
+		private void _SaveSettings()
+		{
+			TextFinderSettings.Default.FilePath = SearchPath;
+			TextFinderSettings.Default.SearchText = SearchText;
+			TextFinderSettings.Default.ExcludeFiles = ExcludeFiles;
+			TextFinderSettings.Default.IncludeFiles = IncludeFiles;
+			TextFinderSettings.Default.MatchSearchTextCase = MatchSearchTextCase;
+			TextFinderSettings.Default.SearchSubdirectories = SearchSubdirectories;
+			TextFinderSettings.Default.CheckNumberOfLinesBetweenSearchTextEntries = CheckNumberOfLinesBetweenSearchTextEntries;
+			TextFinderSettings.Default.LinesBetweenSearchText = LinesBetweenSearchText ?? 0;
+
+			TextFinderSettings.Default.CreatedBeforeDate = CreatedBeforeDate ?? DateTime.MinValue;
+			TextFinderSettings.Default.CreatedAfterDate = CreatedAfterDate ?? DateTime.MinValue;
+			TextFinderSettings.Default.ModifiedBeforeDate = ModifiedBeforeDate ?? DateTime.MinValue;
+			TextFinderSettings.Default.ModifiedAfterDate = ModifiedAfterDate ?? DateTime.MinValue;
+			TextFinderSettings.Default.LastAccessedBeforeDate = LastAccessedBeforeDate ?? DateTime.MinValue;
+			TextFinderSettings.Default.LastAccessedAfterDate = LastAccessedAfterDate ?? DateTime.MinValue;
+
+			TextFinderSettings.Default.Save();
+		}
+
+		private void _Search()
+		{
+			FoundFiles.Clear();
+			FoundTextLines.Clear();
+			FoundTextLinesMessage = "Searching";
+			_backgroundWorker.RunWorkerAsync();
 		}
 
 		private void _SetDefaultFromSettings()
@@ -380,124 +500,41 @@ namespace TextFinder.ViewModel
 				: null;
 		}
 
+		private void _SetupBackGroundWorker()
+		{
+			_backgroundWorker = new BackgroundWorker();
+			_backgroundWorker.WorkerSupportsCancellation = true;
+			_backgroundWorker.WorkerReportsProgress = true;
+			_backgroundWorker.DoWork += worker_Search;
+			_backgroundWorker.ProgressChanged += worker_ProgressChanged;
+			_backgroundWorker.RunWorkerCompleted += worker_SearchCompleted;
+		}
+		private void _UpdateFoundTextLines(FoundFile selectedFile)
+		{
+			if (selectedFile != null)
+			{
+				FoundTextLines = new ObservableCollection<FoundTextLine>(selectedFile.FoundTextLines);
+			}
+		}
+
 		private void _UpdateSuggestedSearchPaths()
 		{
 			var suggestedFilePaths = FileSearcher.SuggestFilePaths(SearchPath);
 
 			SuggestedSearchPaths = new ObservableCollection<string>(suggestedFilePaths);
 		}
-
-		private ObservableCollection<FoundFile> mFoundFiles;
-
-		public ObservableCollection<FoundFile> FoundFiles
+		private void worker_ProgressChanged(object sender, ProgressChangedEventArgs eventArgs)
 		{
-			get
+			SearchProgress = eventArgs.ProgressPercentage;
+			if (eventArgs.UserState != null)
 			{
-				return mFoundFiles;
-			}
-			set
-			{
-				mFoundFiles = value;
-				OnPropertyChanged("FoundFiles");
+				var foundFile = (FoundFile)eventArgs.UserState;
+				FoundFiles.Add(foundFile);
 			}
 		}
 
-		private ObservableCollection<string> _suggestedSearchPaths;
-
-		public ObservableCollection<string> SuggestedSearchPaths
+		private void worker_Search(object sender, DoWorkEventArgs e)
 		{
-			get
-			{
-				return _suggestedSearchPaths;
-			}
-
-			set
-			{
-				if (_suggestedSearchPaths != value)
-				{
-					_suggestedSearchPaths = value;
-					OnPropertyChanged("SuggestedSearchPaths");
-				}
-			}
-		}
-
-		private ObservableCollection<FoundTextLine> mFoundTextLines;
-
-		public ObservableCollection<FoundTextLine> FoundTextLines
-		{
-			get
-			{
-				return mFoundTextLines;
-			}
-			set
-			{
-				mFoundTextLines = value;
-				OnPropertyChanged("FoundTextLines");
-			}
-		}
-
-		public string Error => throw new NotImplementedException();
-
-		public string this[string columnName]
-		{
-			get
-			{
-				if (columnName == "LinesBetweenSearchText")
-				{
-					if (CheckNumberOfLinesBetweenSearchTextEntries && LinesBetweenSearchText == null)
-					{
-						return "Number of lines between search text is required.";
-					}
-				}
-				return string.Empty;
-			}
-		}
-
-		void worker_Search(object sender, DoWorkEventArgs e)
-		{
-			for (int i = 0; i <= 100; i++)
-			{
-				if (_backgroundWorker.CancellationPending == true)
-				{
-					e.Cancel = true;
-					return;
-				}
-				_backgroundWorker.ReportProgress(i);
-				System.Threading.Thread.Sleep(250);
-			}
-			e.Result = 42;
-		}
-
-		void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-		{
-			//lblStatus.Text = "Working... (" + e.ProgressPercentage + "%)";
-			var thing = 1;
-		}
-
-		void worker_SearchCompleted(object sender, RunWorkerCompletedEventArgs e)
-		{
-			if (e.Cancelled)
-			{
-				//lblStatus.Foreground = Brushes.Red;
-				//lblStatus.Text = "Cancelled by user...";
-				var thing = 1;
-			}
-			else
-			{
-				//lblStatus.Foreground = Brushes.Green;
-				//lblStatus.Text = "Done... Calc result: " + e.Result;
-				var thing = 1;
-			}
-		}
-
-		private void _Search()
-		{
-			_backgroundWorker.RunWorkerAsync();
-
-			IsSearching = true;
-
-			FoundFiles.Clear();
-
 			var datefilterCriteria = new DateFilterCriteria
 			{
 				CreatedAfterDate = CreatedAfterDate,
@@ -508,81 +545,62 @@ namespace TextFinder.ViewModel
 				ModifiedBeforeDate = ModifiedBeforeDate
 			};
 
-			FoundFiles = new ObservableCollection<FoundFile>(FileSearcher.FindText(SearchText,
-				SearchPath,
-				IncludeFiles,
-				ExcludeFiles,
-				MatchSearchTextCase,
-				SearchSubdirectories,
-				CheckNumberOfLinesBetweenSearchTextEntries,
-				LinesBetweenSearchText,
-				datefilterCriteria));
-
-			if (FoundFiles.Count == 0)
+			// Have file check to get rid of error if user tries to use fileName as a directory or an invalid directory name
+			if (!File.Exists(SearchPath) && Directory.Exists(SearchPath))
 			{
-				FoundTextLines = new ObservableCollection<FoundTextLine>();
+				var searchOption = SearchSubdirectories ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+				var filePaths = Directory.GetFiles(SearchPath, "*", searchOption);
+
+				var fileCounter = 0;
+				var totalFilesCount = filePaths.Length;
+
+				foreach (var filePath in filePaths)
+				{
+					if (_backgroundWorker.CancellationPending == true)
+					{
+						e.Cancel = true;
+						return;
+					}
+
+					var foundFile = FileSearcher.FindText(SearchText,
+						filePath,
+						IncludeFiles,
+						ExcludeFiles,
+						MatchSearchTextCase,
+						CheckNumberOfLinesBetweenSearchTextEntries,
+						LinesBetweenSearchText,
+						datefilterCriteria);
+
+					if (foundFile != null)
+					{
+						var progressPercentage = Convert.ToInt32(((double)fileCounter / totalFilesCount) * 100);
+						(sender as BackgroundWorker).ReportProgress(progressPercentage, foundFile);
+					}
+					else if (fileCounter % 50 == 0)
+					{
+						var progressPercentage = Convert.ToInt32(((double)fileCounter / totalFilesCount) * 100);
+						(sender as BackgroundWorker).ReportProgress(progressPercentage);
+					}
+					fileCounter++;
+				}
 			}
-
-			_SaveSettings();
-
-			IsSearching = false;
-		}
-
-		private void _Cancel()
-		{
-			_backgroundWorker.CancelAsync();
-		}
-
-		private void _SaveSettings()
-		{
-			TextFinderSettings.Default.FilePath = SearchPath;
-			TextFinderSettings.Default.SearchText = SearchText;
-			TextFinderSettings.Default.ExcludeFiles = ExcludeFiles;
-			TextFinderSettings.Default.IncludeFiles = IncludeFiles;
-			TextFinderSettings.Default.MatchSearchTextCase = MatchSearchTextCase;
-			TextFinderSettings.Default.SearchSubdirectories = SearchSubdirectories;
-			TextFinderSettings.Default.CheckNumberOfLinesBetweenSearchTextEntries = CheckNumberOfLinesBetweenSearchTextEntries;
-			TextFinderSettings.Default.LinesBetweenSearchText = LinesBetweenSearchText ?? 0;
-
-			TextFinderSettings.Default.CreatedBeforeDate = CreatedBeforeDate ?? DateTime.MinValue;
-			TextFinderSettings.Default.CreatedAfterDate = CreatedAfterDate ?? DateTime.MinValue;
-			TextFinderSettings.Default.ModifiedBeforeDate = ModifiedBeforeDate ?? DateTime.MinValue;
-			TextFinderSettings.Default.ModifiedAfterDate = ModifiedAfterDate ?? DateTime.MinValue;
-			TextFinderSettings.Default.LastAccessedBeforeDate = LastAccessedBeforeDate ?? DateTime.MinValue;
-			TextFinderSettings.Default.LastAccessedAfterDate = LastAccessedAfterDate ?? DateTime.MinValue;
-
-			TextFinderSettings.Default.Save();
-		}
-
-		private void _UpdateFoundTextLines(FoundFile selectedFile)
-		{
-			if (selectedFile != null)
+			else
 			{
-				FoundTextLines = new ObservableCollection<FoundTextLine>(selectedFile.FoundTextLines);
+				MessageBox.Show("An invalid file path was entered. Please enter a new path", "Invalid file path", MessageBoxButton.OK);
 			}
 		}
-
-		private void _OpenSelectedFile(FoundFile selectedFile)
+		private void worker_SearchCompleted(object sender, RunWorkerCompletedEventArgs e)
 		{
-			if (selectedFile != null)
+			if (e.Cancelled)
 			{
-				Process.Start(selectedFile.FilePath);
+				SearchProgress = 0;
+				FoundTextLinesMessage = "Search cancelled";
 			}
-		}
-
-		private void _CopyToClipboard(FoundTextLine foundTextLine)
-		{
-			if (foundTextLine != null)
+			else
 			{
-				Clipboard.SetText(foundTextLine.Line);
-			}
-		}
-
-		private void _OpenContainingFolder(FoundFile foundFile)
-		{
-			if (foundFile != null)
-			{
-				Process.Start("explorer.exe", "/select," + foundFile.FilePath);
+				SearchProgress = 100;
+				FoundTextLinesMessage = "Search complete";
+				_SaveSettings();
 			}
 		}
 	}

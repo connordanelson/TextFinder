@@ -4,13 +4,7 @@ namespace TextFinder.Model
 {
 	public class DateFilterCriteria
 	{
-		public DateTime? ModifiedBeforeDate
-		{
-			get;
-			set;
-		}
-
-		public DateTime? ModifiedAfterDate
+		public DateTime? CreatedAfterDate
 		{
 			get;
 			set;
@@ -22,7 +16,7 @@ namespace TextFinder.Model
 			set;
 		}
 
-		public DateTime? CreatedAfterDate
+		public DateTime? LastAccessedAfterDate
 		{
 			get;
 			set;
@@ -34,7 +28,13 @@ namespace TextFinder.Model
 			set;
 		}
 
-		public DateTime? LastAccessedAfterDate
+		public DateTime? ModifiedAfterDate
+		{
+			get;
+			set;
+		}
+
+		public DateTime? ModifiedBeforeDate
 		{
 			get;
 			set;
