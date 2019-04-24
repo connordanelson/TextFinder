@@ -165,7 +165,7 @@
 					<ColumnDefinition Width="5" />
 					<ColumnDefinition Width="*" />
 				</Grid.ColumnDefinitions>
-				<ListView Name="FoundFilesListView" ItemsSource="{Binding FoundFiles, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+				<ListView Name="FoundFilesListView" ItemsSource="{Binding FoundFilesViewSource.View, UpdateSourceTrigger=PropertyChanged}">
 					<i:Interaction.Triggers>
 						<i:EventTrigger EventName="SelectionChanged">
 							<i:InvokeCommandAction Command="{Binding Path=UpdateFoundTextLinesCommand}" CommandParameter="{Binding ElementName=FoundFilesListView, Path=SelectedItem}" />
@@ -176,12 +176,24 @@
 					</i:Interaction.Triggers>
 					<ListView.View>
 						<GridView>
-							<GridViewColumn Header="Name" DisplayMemberBinding="{Binding FileName}" Width="125" />
-							<GridViewColumn Header="Path" DisplayMemberBinding="{Binding FilePath}" Width="500" />
-							<GridViewColumn Header="Type" DisplayMemberBinding="{Binding FileType}" />
-							<GridViewColumn Header="Created On" DisplayMemberBinding="{Binding CreatedOnDate}" />
-							<GridViewColumn Header="Last Modified" DisplayMemberBinding="{Binding LastModifiedDate}" />
-							<GridViewColumn Header="Last Accessed" DisplayMemberBinding="{Binding LastAccessedDate}" />
+							<GridViewColumn DisplayMemberBinding="{Binding FileName}" Width="125" >
+								<GridViewColumnHeader Content="Name" Command="{Binding SortColumnCommand}" CommandParameter="FileName" />
+							</GridViewColumn>
+							<GridViewColumn DisplayMemberBinding="{Binding FilePath}" Width="500">
+								<GridViewColumnHeader Content="Path" Command="{Binding SortColumnCommand}" CommandParameter="FilePath" />
+							</GridViewColumn>
+							<GridViewColumn DisplayMemberBinding="{Binding FileType}">
+								<GridViewColumnHeader Content="Type" Command="{Binding SortColumnCommand}" CommandParameter="FileType" />
+							</GridViewColumn>
+							<GridViewColumn DisplayMemberBinding="{Binding CreatedOnDate}">
+								<GridViewColumnHeader Content="Created On" Command="{Binding SortColumnCommand}" CommandParameter="CreatedOnDate" />
+							</GridViewColumn>
+							<GridViewColumn DisplayMemberBinding="{Binding LastModifiedDate}">
+								<GridViewColumnHeader Content="Last Modified" Command="{Binding SortColumnCommand}" CommandParameter="LastModifiedDate" />
+							</GridViewColumn>
+							<GridViewColumn DisplayMemberBinding="{Binding LastAccessedDate}">
+								<GridViewColumnHeader Content="Last Accessed" Command="{Binding SortColumnCommand}" CommandParameter="LastAccessedDate" />
+							</GridViewColumn>
 						</GridView>
 					</ListView.View>
 					<ListBox.ItemContainerStyle>

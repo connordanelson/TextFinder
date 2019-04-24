@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Data;
 using TextFinder.Model;
 using TextFinder.Settings;
 
@@ -13,12 +14,15 @@ namespace TextFinder.ViewModel
 	public class TextFinderViewModel : ViewModelBase, IDataErrorInfo
 	{
 		private BackgroundWorker _backgroundWorker = null;
+		private string _sortColumn;
+		private ListSortDirection _sortDirection;
 
 		public TextFinderViewModel()
 		{
 			FoundFiles = new ObservableCollection<FoundFile>();
 			FoundTextLines = new ObservableCollection<FoundTextLine>();
 			SearchCommand = new DelegateCommand(_Search);
+			SortColumnCommand = new DelegateCommand<string>(_SortColumn);
 			CancelCommand = new DelegateCommand(_Cancel);
 			UpdateFoundTextLinesCommand = new DelegateCommand<FoundFile>(_UpdateFoundTextLines);
 			SuggestedSearchPaths = new ObservableCollection<string>();
@@ -116,17 +120,33 @@ namespace TextFinder.ViewModel
 			}
 		}
 
-		private ObservableCollection<FoundFile> mFoundFiles;
+		private ObservableCollection<FoundFile> _foundFiles;
 		public ObservableCollection<FoundFile> FoundFiles
 		{
 			get
 			{
-				return mFoundFiles;
+				return _foundFiles;
 			}
 			set
 			{
-				mFoundFiles = value;
+				_foundFiles = value;
+				_foundFilesViewSource = new CollectionViewSource();
+				_foundFilesViewSource.Source = _foundFiles;
 				OnPropertyChanged("FoundFiles");
+			}
+		}
+
+		private CollectionViewSource _foundFilesViewSource;
+		public CollectionViewSource FoundFilesViewSource
+		{
+			get
+			{
+				return _foundFilesViewSource;
+			}
+			set
+			{
+				_foundFilesViewSource = value;
+				OnPropertyChanged("FoundFilesViewSource");
 			}
 		}
 
@@ -298,6 +318,12 @@ namespace TextFinder.ViewModel
 			private set;
 		}
 
+		public DelegateCommand<string> SortColumnCommand
+		{
+			get;
+			private set;
+		}
+
 		private string _searchPath;
 		public string SearchPath
 		{
@@ -463,6 +489,27 @@ namespace TextFinder.ViewModel
 			FoundTextLines.Clear();
 			FoundTextLinesMessage = "Searching";
 			_backgroundWorker.RunWorkerAsync();
+		}
+
+		private void _SortColumn(string column)
+		{
+			FoundFilesViewSource.SortDescriptions.Clear();
+
+			if (column == _sortColumn)
+			{
+				_sortDirection = _sortDirection == ListSortDirection.Ascending ? ListSortDirection.Descending : ListSortDirection.Ascending;
+			}
+			else
+			{
+				_sortDirection = ListSortDirection.Ascending;
+				_sortColumn = column;
+			}
+
+			FoundFilesViewSource.SortDescriptions.Add(new SortDescription
+			{
+				Direction = _sortDirection,
+				PropertyName = _sortColumn
+			});
 		}
 
 		private void _SetDefaultFromSettings()
