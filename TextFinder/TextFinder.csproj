@@ -64,6 +64,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="CustomExtensions\StringExtension.cs" />
+    <Compile Include="DoubleClickBehavior.cs" />
     <Compile Include="FileSearcher.cs" />
     <Compile Include="Model\DateFilterCriteria.cs" />
     <Compile Include="Model\FoundTextLine.cs" />

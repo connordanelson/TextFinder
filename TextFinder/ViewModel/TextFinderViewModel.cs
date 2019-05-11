@@ -394,6 +394,23 @@ namespace TextFinder.ViewModel
 			}
 		}
 
+		private FoundFile _selectedFoundFile;
+		public FoundFile SelectedFoundFile
+		{
+			get
+			{
+				return _selectedFoundFile;
+			}
+			set
+			{
+				if (_selectedFoundFile != value)
+				{
+					_selectedFoundFile = value;
+					OnPropertyChanged("SelectedFoundFile");
+				}
+			}
+		}
+
 		private ObservableCollection<string> _suggestedSearchPaths;
 		public ObservableCollection<string> SuggestedSearchPaths
 		{
