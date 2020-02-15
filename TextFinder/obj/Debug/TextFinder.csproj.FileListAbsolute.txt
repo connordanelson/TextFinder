@@ -12,7 +12,6 @@ C:\Users\conno\source\repos\TextFinder\TextFinder\bin\Debug\TextFinder.exe.confi
 C:\Users\conno\source\repos\TextFinder\TextFinder\bin\Debug\TextFinder.exe
 C:\Users\conno\source\repos\TextFinder\TextFinder\bin\Debug\TextFinder.pdb
 C:\Users\conno\source\repos\TextFinder\TextFinder\bin\Debug\Prism.dll
-C:\Users\conno\source\repos\TextFinder\TextFinder\bin\Debug\System.Windows.Interactivity.dll
 C:\Users\conno\source\repos\TextFinder\TextFinder\bin\Debug\Prism.pdb
 C:\Users\conno\source\repos\TextFinder\TextFinder\bin\Debug\Prism.xml
 C:\Users\conno\source\repos\TextFinder\TextFinder\bin\Debug\de\System.Windows.Interactivity.resources.dll

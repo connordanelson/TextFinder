@@ -160,8 +160,8 @@
 			</Button>
 
 			<Button Grid.Column="2" Margin="0, 0, 10, 0" Content="Cancel" Command="{Binding CancelCommand}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-			<TextBlock Text="{Binding SearchProgress, StringFormat={}{0}% }" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,60,0,0" Name="lblStatus" HorizontalAlignment="Center" VerticalAlignment="Center" />
-			<ProgressBar Grid.Column="1" Margin="5,10" Value="{Binding SearchProgress}" Grid.ColumnSpan="2" Height="18" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" />
+			<TextBlock Text="{Binding NumberOfFilesFound, StringFormat={}{0} Found }" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,60,0,0" Name="lblStatus" HorizontalAlignment="Center" VerticalAlignment="Center" />
+			<ProgressBar IsIndeterminate="{Binding IsIndeterminate}" Grid.Column="1" Margin="5,10" Grid.ColumnSpan="2" Height="18" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" />
 		</Grid>
 
 		<DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Row="1">
